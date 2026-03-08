@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,6 +31,9 @@ def parse_args() -> argparse.Namespace:
         type=Path,
         default=Path("/Users/mini/crypto_algo/state_live/long_sleeve_live_state.json"),
     )
+    p.add_argument("--nav-usd", type=float, default=20_000.0)
+    p.add_argument("--shadow-csv", type=Path, default=None)
+    p.add_argument("--shadow-state-json", type=Path, default=None)
     return p.parse_args()
 
 
@@ -52,10 +56,39 @@ def _fmt_px(x: float | None) -> str:
     return f"{float(x):.6f}"
 
 
+def _fmt_usd(weight: float, nav_usd: float) -> str:
+    return f"{weight * nav_usd:+.2f}"
+
+
+def _fmt_qty(weight: float, nav_usd: float, px: float | None) -> str:
+    if px is None or px <= 0:
+        return "n/a"
+    return f"{abs(weight * nav_usd) / px:.4f}"
+
+
 def _risk_from_vol(vol20: float) -> tuple[float, float]:
     stop = max(min(2.0 * float(vol20), 0.18), 0.08)
     take = max(min(3.0 * float(vol20), 0.35), 0.15)
     return stop, take
+
+
+def _load_latest_shadow(csv_path: Path | None, state_path: Path | None) -> tuple[str | None, float | None, float | None]:
+    day = None
+    day_ret = None
+    nav = None
+    if csv_path is not None and csv_path.exists():
+        with csv_path.open() as f:
+            rows = list(csv.DictReader(f))
+        if rows:
+            row = rows[-1]
+            day = row.get("day_utc")
+            v = row.get("daily_return")
+            if v not in (None, ""):
+                day_ret = float(v)
+    if state_path is not None and state_path.exists():
+        st = json.loads(state_path.read_text())
+        nav = float(st.get("nav", 1.0))
+    return day, day_ret, nav
 
 
 def main() -> int:
@@ -118,6 +151,13 @@ def main() -> int:
             lu=uni.get("long_universe_count", ""),
         )
     )
+    lines.append(f"nav_reference_usd={args.nav_usd:.2f}")
+    shadow_day, shadow_ret, shadow_nav = _load_latest_shadow(args.shadow_csv, args.shadow_state_json)
+    if shadow_ret is not None:
+        tag = f"[{shadow_day}] " if shadow_day else ""
+        lines.append(f"shadow_day_return={tag}{shadow_ret:+.2%}")
+    if shadow_nav is not None:
+        lines.append(f"shadow_nav={shadow_nav:.6f} shadow_pnl_usd={(shadow_nav - 1.0) * args.nav_usd:+.2f}")
     lines.append("=" * 64)
     lines.append("ACTION NOW")
 
@@ -127,23 +167,30 @@ def main() -> int:
         if closes:
             lines.append("  CLOSE")
             for s in closes:
+                pw = float(prev_w[s])
+                exit_px = close_ref.get(s)
                 lines.append(
-                    f"    {s:<12} prev={_fmt_w(float(prev_w[s]))} entry_ref={_fmt_px(prev_entry.get(s))} exit_ref={_fmt_px(close_ref.get(s))}"
+                    f"    {s:<12} prev={_fmt_w(pw)} usd={_fmt_usd(pw, args.nav_usd)} qty_est={_fmt_qty(pw, args.nav_usd, exit_px)} entry_ref={_fmt_px(prev_entry.get(s))} exit_ref={_fmt_px(exit_px)}"
                 )
         if opens:
             lines.append("  OPEN")
             for s in opens:
                 t = target[s]
+                w = float(t["weight"])
+                entry = t["entry_ref"]
                 lines.append(
-                    f"    {s:<12} w={_fmt_w(t['weight'])} entry_ref={_fmt_px(t['entry_ref'])} stop={t['stop_pct']:.1%} take={t['take_pct']:.1%}"
+                    f"    {s:<12} w={_fmt_w(w)} usd={_fmt_usd(w, args.nav_usd)} qty_est={_fmt_qty(w, args.nav_usd, entry)} entry_ref={_fmt_px(entry)} stop={t['stop_pct']:.1%} take={t['take_pct']:.1%}"
                 )
         if adjusts:
             lines.append("  ADJUST")
             for s in adjusts:
                 t = target[s]
-                tag = "ADD" if abs(float(t["weight"])) > abs(float(prev_w[s])) else "REDUCE"
+                pw = float(prev_w[s])
+                nw = float(t["weight"])
+                tag = "ADD" if abs(nw) > abs(pw) else "REDUCE"
+                delta = nw - pw
                 lines.append(
-                    f"    {s:<12} {_fmt_w(float(prev_w[s]))} -> {_fmt_w(t['weight'])} {tag}_ref={_fmt_px(close_ref.get(s))} stop={t['stop_pct']:.1%} take={t['take_pct']:.1%}"
+                    f"    {s:<12} {_fmt_w(pw)} -> {_fmt_w(nw)} usd={_fmt_usd(pw, args.nav_usd)} -> {_fmt_usd(nw, args.nav_usd)} delta_usd={_fmt_usd(delta, args.nav_usd)} {tag}_ref={_fmt_px(close_ref.get(s))} stop={t['stop_pct']:.1%} take={t['take_pct']:.1%}"
                 )
 
     lines.append("HOLD")
@@ -151,7 +198,8 @@ def main() -> int:
         lines.append("  None")
     else:
         for s in holds:
-            lines.append(f"  {s:<12} w={_fmt_w(float(new_w[s]))}")
+            w = float(new_w[s])
+            lines.append(f"  {s:<12} w={_fmt_w(w)} usd={_fmt_usd(w, args.nav_usd)}")
 
     lines.append("")
     lines.append("TARGET PORTFOLIO")
@@ -159,9 +207,10 @@ def main() -> int:
         lines.append("  Flat")
     else:
         gross = sum(abs(float(v)) for v in new_w.values())
-        lines.append(f"  gross_long={gross:.2%}")
+        lines.append(f"  gross_long={gross:.2%} gross_long_usd={gross * args.nav_usd:.2f}")
         for s in sorted(new_w.keys(), key=lambda k: float(new_w[k]), reverse=True):
-            lines.append(f"  {s:<12} {_fmt_w(float(new_w[s]))}")
+            w = float(new_w[s])
+            lines.append(f"  {s:<12} {_fmt_w(w)} usd={_fmt_usd(w, args.nav_usd)}")
 
     memo = "\n".join(lines) + "\n"
     args.memo_path.parent.mkdir(parents=True, exist_ok=True)
@@ -179,6 +228,7 @@ def main() -> int:
         "data_day_utc": asof_utc,
         "n_target": len(new_w),
         "top_k": cfg.get("top_k"),
+        "nav_reference_usd": args.nav_usd,
     }
     args.state_json.parent.mkdir(parents=True, exist_ok=True)
     args.state_json.write_text(json.dumps(new_state, indent=2, sort_keys=True) + "\n")

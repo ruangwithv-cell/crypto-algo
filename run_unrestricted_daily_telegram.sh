@@ -10,6 +10,10 @@ LONG_MEMO="$STATE/long_sleeve_latest_action_memo.txt"
 LONG_MEMO_STATE="$STATE/long_sleeve_live_state.json"
 LONG_TRACKER_STATE="$STATE/long_sleeve_top100_shadow_pnl_state.json"
 LONG_TRACKER_CSV="$STATE/long_sleeve_top100_shadow_pnl_daily.csv"
+SHORT_NAV_USD="${SHORT_NAV_USD:-20000}"
+LONG_NAV_USD="${LONG_NAV_USD:-6000}"
+KELLY_FRACTION="${KELLY_FRACTION:-0.50}"
+KELLY_MAX_SCALE="${KELLY_MAX_SCALE:-1.50}"
 
 mkdir -p "$STATE" "$STATE/logs"
 
@@ -72,7 +76,12 @@ python3 -m crypto_algo.bear_unrestricted_live \
   --min-history-bars 120 \
   --min-dollar-volume 1000000 \
   --score-threshold 0.15 \
-  --spread-threshold 0.25
+  --spread-threshold 0.25 \
+  --kelly-fraction "$KELLY_FRACTION" \
+  --kelly-max-scale "$KELLY_MAX_SCALE" \
+  --nav-usd "$SHORT_NAV_USD" \
+  --shadow-csv "$STATE/unrestricted_shadow_pnl_daily.csv" \
+  --shadow-state-json "$STATE/unrestricted_shadow_pnl_state.json"
 
 # 3) Record long-sleeve scenarios (top50/top100/top200)
 python3 -m crypto_algo.long_sleeve_record_scenarios \
@@ -82,13 +91,19 @@ python3 -m crypto_algo.long_sleeve_record_scenarios \
   --gross-long 0.85 \
   --min-history-bars 120 \
   --min-dollar-volume 5000000 \
-  --score-threshold 0.15
+  --score-threshold 0.15 \
+  --kelly-fraction "$KELLY_FRACTION" \
+  --kelly-max-scale "$KELLY_MAX_SCALE"
 
 # 4) Generate today's long action memo (from top100 sleeve)
 python3 -m crypto_algo.long_sleeve_live \
   --long-sleeve-json "$LONG_SLEEVE_JSON" \
   --memo-path "$LONG_MEMO" \
-  --state-json "$LONG_MEMO_STATE"
+  --state-json "$LONG_MEMO_STATE" \
+  --data-json "$DATA_JSON" \
+  --nav-usd "$LONG_NAV_USD" \
+  --shadow-csv "$LONG_TRACKER_CSV" \
+  --shadow-state-json "$LONG_TRACKER_STATE"
 
 # 5) Track short shadow PnL
 python3 -m crypto_algo.shadow_pnl_daily \

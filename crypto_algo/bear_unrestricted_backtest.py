@@ -229,6 +229,8 @@ def _target(
     n_max: int,
     score_threshold: float,
     spread_threshold: float,
+    kelly_fraction: float = 0.5,
+    kelly_max_scale: float = 1.5,
 ) -> tuple[dict[str, Position], float, int]:
     day_key = (days[idx] // 86_400_000) * 86_400_000
 
@@ -322,9 +324,15 @@ def _target(
     if z <= 0:
         return {}, spread, n_target
 
+    kf = max(0.0, min(float(kelly_fraction), 1.0))
+    km = max(0.0, float(kelly_max_scale))
+
     out = {}
     for s in picked:
-        w = -gross * inv[s] / z
+        base_abs = gross * inv[s] / z
+        edge = max(float(score[s]) - float(score_threshold), 0.0)
+        scale = 1.0 + km * kf * min(edge, 1.0)
+        w = -base_abs * scale
         w = -min(abs(w), 0.20)
         vv = vol[s]
         stop = max(min(2.0 * vv, 0.18), 0.08)

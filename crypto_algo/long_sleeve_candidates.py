@@ -17,6 +17,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--min-history-bars", type=int, default=120)
     p.add_argument("--min-dollar-volume", type=float, default=1_000_000.0)
     p.add_argument("--score-threshold", type=float, default=0.15)
+    p.add_argument("--kelly-fraction", type=float, default=0.5)
+    p.add_argument("--kelly-max-scale", type=float, default=1.5)
     p.add_argument("--output-json", type=Path, default=Path("/Users/mini/crypto_algo/state_live/long_sleeve_top200_latest.json"))
     return p.parse_args()
 
@@ -38,6 +40,8 @@ def build_long_sleeve(
     min_history_bars: int,
     min_dollar_volume: float,
     score_threshold: float,
+    kelly_fraction: float = 0.5,
+    kelly_max_scale: float = 1.5,
 ) -> dict:
     days, px, funding = _build_daily(payload)
     if not days:
@@ -126,7 +130,19 @@ def build_long_sleeve(
 
     inv = {s: 1.0 / max(vol[s], 1e-6) for s in picked}
     z = sum(inv.values())
-    weights = {s: gross_long * inv[s] / z for s in picked}
+    kf = max(0.0, min(float(kelly_fraction), 1.0))
+    km = max(0.0, float(kelly_max_scale))
+    raw = {}
+    for s in picked:
+        base_abs = gross_long * inv[s] / z
+        edge = max(float(score[s]) - float(score_threshold), 0.0)
+        scale = 1.0 + km * kf * min(edge, 1.0)
+        raw[s] = base_abs * scale
+    raw_sum = sum(raw.values())
+    if raw_sum <= 0:
+        weights = {s: gross_long / len(picked) for s in picked}
+    else:
+        weights = {s: gross_long * raw[s] / raw_sum for s in picked}
 
     out = {
         "asof_utc": __import__("datetime").datetime.fromtimestamp(days[idx] / 1000, tz=__import__("datetime").timezone.utc).isoformat(),
@@ -137,6 +153,8 @@ def build_long_sleeve(
             "min_history_bars": min_history_bars,
             "min_dollar_volume": min_dollar_volume,
             "score_threshold": score_threshold,
+            "kelly_fraction": max(0.0, min(float(kelly_fraction), 1.0)),
+            "kelly_max_scale": max(0.0, float(kelly_max_scale)),
         },
         "universe": {
             "eligible_count": len(eligible),
@@ -166,6 +184,8 @@ def main() -> int:
         min_history_bars=args.min_history_bars,
         min_dollar_volume=args.min_dollar_volume,
         score_threshold=args.score_threshold,
+        kelly_fraction=args.kelly_fraction,
+        kelly_max_scale=args.kelly_max_scale,
     )
 
     args.output_json.parent.mkdir(parents=True, exist_ok=True)

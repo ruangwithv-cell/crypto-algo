@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -19,6 +20,11 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--min-dollar-volume", type=float, default=1_000_000.0)
     p.add_argument("--score-threshold", type=float, default=0.15)
     p.add_argument("--spread-threshold", type=float, default=0.25)
+    p.add_argument("--kelly-fraction", type=float, default=0.5)
+    p.add_argument("--kelly-max-scale", type=float, default=1.5)
+    p.add_argument("--nav-usd", type=float, default=20_000.0)
+    p.add_argument("--shadow-csv", type=Path, default=None)
+    p.add_argument("--shadow-state-json", type=Path, default=None)
     return p.parse_args()
 
 
@@ -39,6 +45,35 @@ def _fmt_px(x: float | None) -> str:
     if x is None:
         return "n/a"
     return f"{float(x):.6f}"
+
+
+def _fmt_usd(weight: float, nav_usd: float) -> str:
+    return f"{weight * nav_usd:+.2f}"
+
+
+def _fmt_qty(weight: float, nav_usd: float, px: float | None) -> str:
+    if px is None or px <= 0:
+        return "n/a"
+    return f"{abs(weight * nav_usd) / px:.4f}"
+
+
+def _load_latest_shadow(csv_path: Path | None, state_path: Path | None) -> tuple[str | None, float | None, float | None]:
+    day = None
+    day_ret = None
+    nav = None
+    if csv_path is not None and csv_path.exists():
+        with csv_path.open() as f:
+            rows = list(csv.DictReader(f))
+        if rows:
+            row = rows[-1]
+            day = row.get("day_utc")
+            v = row.get("daily_return")
+            if v not in (None, ""):
+                day_ret = float(v)
+    if state_path is not None and state_path.exists():
+        st = json.loads(state_path.read_text())
+        nav = float(st.get("nav", 1.0))
+    return day, day_ret, nav
 
 
 def main() -> int:
@@ -67,6 +102,8 @@ def main() -> int:
             args.n_shorts_max,
             args.score_threshold,
             args.spread_threshold,
+            args.kelly_fraction,
+            args.kelly_max_scale,
         )
     else:
         target_pos, spread, n_target = {}, 0.0, args.n_shorts_min
@@ -92,6 +129,14 @@ def main() -> int:
     lines.append(f"data_day_utc={datetime.fromtimestamp(days[idx] / 1000, tz=timezone.utc).isoformat()}")
     lines.append(f"regime={regime} active={on}")
     lines.append(f"eligible={len(eligible)} spread={spread:.3f} n_target={n_target}")
+    lines.append(f"nav_reference_usd={args.nav_usd:.2f}")
+    lines.append(f"kelly_fraction={max(0.0, min(args.kelly_fraction, 1.0)):.2f} kelly_max_scale={max(args.kelly_max_scale, 0.0):.2f}")
+    shadow_day, shadow_ret, shadow_nav = _load_latest_shadow(args.shadow_csv, args.shadow_state_json)
+    if shadow_ret is not None:
+        tag = f"[{shadow_day}] " if shadow_day else ""
+        lines.append(f"shadow_day_return={tag}{shadow_ret:+.2%}")
+    if shadow_nav is not None:
+        lines.append(f"shadow_nav={shadow_nav:.6f} shadow_pnl_usd={(shadow_nav - 1.0) * args.nav_usd:+.2f}")
     lines.append("=" * 64)
     lines.append("ACTION NOW")
 
@@ -101,23 +146,30 @@ def main() -> int:
         if closes:
             lines.append("  CLOSE")
             for s in closes:
+                pw = float(prev_w[s])
+                exit_px = close_ref.get(s)
                 lines.append(
-                    f"    {s:<12} prev={_fmt_w(float(prev_w[s]))} entry_ref={_fmt_px(prev_entry.get(s))} exit_ref={_fmt_px(close_ref.get(s))}"
+                    f"    {s:<12} prev={_fmt_w(pw)} usd={_fmt_usd(pw, args.nav_usd)} qty_est={_fmt_qty(pw, args.nav_usd, exit_px)} entry_ref={_fmt_px(prev_entry.get(s))} exit_ref={_fmt_px(exit_px)}"
                 )
         if opens:
             lines.append("  OPEN")
             for s in opens:
                 pos = target_pos[s]
+                w = float(pos.weight)
+                entry = float(pos.entry)
                 lines.append(
-                    f"    {s:<12} w={_fmt_w(pos.weight)} entry_ref={_fmt_px(float(pos.entry))} stop={pos.stop_pct:.1%} take={pos.take_pct:.1%}"
+                    f"    {s:<12} w={_fmt_w(w)} usd={_fmt_usd(w, args.nav_usd)} qty_est={_fmt_qty(w, args.nav_usd, entry)} entry_ref={_fmt_px(entry)} stop={pos.stop_pct:.1%} take={pos.take_pct:.1%}"
                 )
         if adjusts:
             lines.append("  ADJUST")
             for s in adjusts:
                 pos = target_pos[s]
-                tag = "ADD" if abs(float(pos.weight)) > abs(float(prev_w[s])) else "REDUCE"
+                pw = float(prev_w[s])
+                nw = float(pos.weight)
+                tag = "ADD" if abs(nw) > abs(pw) else "REDUCE"
+                delta = nw - pw
                 lines.append(
-                    f"    {s:<12} {_fmt_w(float(prev_w[s]))} -> {_fmt_w(pos.weight)} {tag}_ref={_fmt_px(close_ref.get(s))} stop={pos.stop_pct:.1%} take={pos.take_pct:.1%}"
+                    f"    {s:<12} {_fmt_w(pw)} -> {_fmt_w(nw)} usd={_fmt_usd(pw, args.nav_usd)} -> {_fmt_usd(nw, args.nav_usd)} delta_usd={_fmt_usd(delta, args.nav_usd)} {tag}_ref={_fmt_px(close_ref.get(s))} stop={pos.stop_pct:.1%} take={pos.take_pct:.1%}"
                 )
 
     lines.append("HOLD")
@@ -125,7 +177,8 @@ def main() -> int:
         lines.append("  None")
     else:
         for s in holds:
-            lines.append(f"  {s:<12} w={_fmt_w(float(new_w[s]))}")
+            w = float(new_w[s])
+            lines.append(f"  {s:<12} w={_fmt_w(w)} usd={_fmt_usd(w, args.nav_usd)}")
 
     lines.append("")
     lines.append("TARGET PORTFOLIO")
@@ -133,9 +186,10 @@ def main() -> int:
         lines.append("  Flat")
     else:
         gross = sum(abs(float(v)) for v in new_w.values())
-        lines.append(f"  gross_short={gross:.2%}")
+        lines.append(f"  gross_short={gross:.2%} gross_short_usd={gross * args.nav_usd:.2f}")
         for s in sorted(new_w.keys(), key=lambda k: float(new_w[k])):
-            lines.append(f"  {s:<12} {_fmt_w(float(new_w[s]))}")
+            w = float(new_w[s])
+            lines.append(f"  {s:<12} {_fmt_w(w)} usd={_fmt_usd(w, args.nav_usd)}")
 
     memo = "\n".join(lines) + "\n"
     args.memo_path.parent.mkdir(parents=True, exist_ok=True)
@@ -154,6 +208,7 @@ def main() -> int:
         "spread": spread,
         "n_target": n_target,
         "eligible_count": len(eligible),
+        "nav_reference_usd": args.nav_usd,
     }
     args.state_json.parent.mkdir(parents=True, exist_ok=True)
     args.state_json.write_text(json.dumps(new_state, indent=2, sort_keys=True) + "\n")

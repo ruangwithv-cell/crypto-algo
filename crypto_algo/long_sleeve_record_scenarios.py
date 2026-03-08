@@ -18,6 +18,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--min-history-bars", type=int, default=120)
     p.add_argument("--min-dollar-volume", type=float, default=1_000_000.0)
     p.add_argument("--score-threshold", type=float, default=0.15)
+    p.add_argument("--kelly-fraction", type=float, default=0.5)
+    p.add_argument("--kelly-max-scale", type=float, default=1.5)
     return p.parse_args()
 
 
@@ -41,6 +43,8 @@ def main() -> int:
             min_history_bars=args.min_history_bars,
             min_dollar_volume=args.min_dollar_volume,
             score_threshold=args.score_threshold,
+            kelly_fraction=args.kelly_fraction,
+            kelly_max_scale=args.kelly_max_scale,
         )
         p = args.state_dir / f"long_sleeve_top{k}_latest.json"
         p.write_text(json.dumps(out, indent=2, sort_keys=True) + "\n")
