@@ -1,0 +1,59 @@
+{
+  "timestamp": "2026-03-06T08:00:00+00:00",
+  "assets": [
+    {
+      "symbol": "APT",
+      "rank": 75,
+      "price_usd": 0.9968,
+      "funding_rate_8h": 0.0004,
+      "open_interest_usd": 23000000,
+      "volume_usd": 120000000,
+      "returns": {"1d": -0.015, "7d": -0.090, "30d": -0.210, "90d": -0.390}
+    },
+    {
+      "symbol": "ENA",
+      "rank": 82,
+      "price_usd": 0.1147,
+      "funding_rate_8h": 0.0002,
+      "open_interest_usd": 18000000,
+      "volume_usd": 95000000,
+      "returns": {"1d": -0.021, "7d": -0.130, "30d": -0.260, "90d": -0.440}
+    },
+    {
+      "symbol": "PUMP",
+      "rank": 98,
+      "price_usd": 0.002005,
+      "funding_rate_8h": -0.0004,
+      "open_interest_usd": 14000000,
+      "volume_usd": 62000000,
+      "returns": {"1d": -0.010, "7d": -0.070, "30d": -0.180, "90d": -0.300}
+    },
+    {
+      "symbol": "WIF",
+      "rank": 61,
+      "price_usd": 0.2146,
+      "funding_rate_8h": 0.0005,
+      "open_interest_usd": 51000000,
+      "volume_usd": 220000000,
+      "returns": {"1d": -0.018, "7d": -0.100, "30d": -0.220, "90d": -0.350}
+    },
+    {
+      "symbol": "OP",
+      "rank": 67,
+      "price_usd": 1.84,
+      "funding_rate_8h": -0.0018,
+      "open_interest_usd": 76000000,
+      "volume_usd": 205000000,
+      "returns": {"1d": 0.011, "7d": -0.030, "30d": 0.015, "90d": -0.120}
+    },
+    {
+      "symbol": "LDO",
+      "rank": 58,
+      "price_usd": 2.10,
+      "funding_rate_8h": 0.0001,
+      "open_interest_usd": 12000000,
+      "volume_usd": 54000000,
+      "returns": {"1d": -0.007, "7d": -0.025, "30d": -0.080, "90d": -0.110}
+    }
+  ]
+}

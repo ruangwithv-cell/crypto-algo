@@ -1,0 +1,74 @@
+{
+  "exposure": 0.0375,
+  "instructions": [
+    {
+      "action": "SHORT_ENTRY",
+      "reason": "confirmed_signal",
+      "size_pct_nav": 0.0375,
+      "symbol": "ENA"
+    }
+  ],
+  "signals": [
+    {
+      "carry_score": 0.6000000000000001,
+      "liquidity_score": 0.43666666666666665,
+      "oi_score": 0.35,
+      "score": 0.654214,
+      "symbol": "ENA",
+      "trend_30d": 0.7428571428571429,
+      "trend_7d": 0.65,
+      "trend_90d": 0.7333333333333334
+    },
+    {
+      "carry_score": 0.75,
+      "liquidity_score": 0.8400000000000001,
+      "oi_score": 0.455,
+      "score": 0.61131,
+      "symbol": "WIF",
+      "trend_30d": 0.6285714285714287,
+      "trend_7d": 0.5,
+      "trend_90d": 0.5833333333333334
+    },
+    {
+      "carry_score": 0.7,
+      "liquidity_score": 0.5533333333333333,
+      "oi_score": 0.295,
+      "score": 0.584667,
+      "symbol": "APT",
+      "trend_30d": 0.6,
+      "trend_7d": 0.44999999999999996,
+      "trend_90d": 0.65
+    },
+    {
+      "carry_score": 0.30000000000000004,
+      "liquidity_score": 0.3,
+      "oi_score": 0.21000000000000002,
+      "score": 0.419571,
+      "symbol": "PUMP",
+      "trend_30d": 0.5142857142857143,
+      "trend_7d": 0.35000000000000003,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.55,
+      "liquidity_score": 0.26,
+      "oi_score": 0.11,
+      "score": 0.24031,
+      "symbol": "LDO",
+      "trend_30d": 0.2285714285714286,
+      "trend_7d": 0.125,
+      "trend_90d": 0.18333333333333335
+    },
+    {
+      "carry_score": 0.0,
+      "liquidity_score": 1.0,
+      "oi_score": 0.44,
+      "score": 0.179,
+      "symbol": "OP",
+      "trend_30d": 0.0,
+      "trend_7d": 0.15,
+      "trend_90d": 0.2
+    }
+  ],
+  "timestamp": "2026-03-06T08:00:00+00:00"
+}

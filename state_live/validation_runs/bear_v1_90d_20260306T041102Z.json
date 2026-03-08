@@ -1,0 +1,49 @@
+{
+  "activity": {
+    "avg_turnover": 0.245913,
+    "regime_on_ratio": 0.966667,
+    "trade_changes": 144
+  },
+  "benchmarks": {
+    "ew_short_universe": {
+      "cagr": 2.811467,
+      "final_nav": 1.390859,
+      "max_drawdown": -0.262747,
+      "sharpe": 2.218609,
+      "total_return": 0.390859
+    },
+    "topn_short_momentum": {
+      "cagr": 1.376125,
+      "final_nav": 1.237884,
+      "max_drawdown": -0.319511,
+      "sharpe": 1.530622,
+      "total_return": 0.237884
+    }
+  },
+  "config": {
+    "cost_bps": 5.0,
+    "lookback_days": 90,
+    "n_shorts": 5,
+    "rebalance_days": 3,
+    "strategy": "bear_v1_short_only_regime"
+  },
+  "performance": {
+    "cagr": 6.617628,
+    "final_nav": 1.649814,
+    "max_drawdown": -0.201665,
+    "sharpe": 3.374161,
+    "total_return": 0.649814
+  },
+  "period": {
+    "days": 90.0,
+    "end_utc": "2026-03-06T00:00:00+00:00",
+    "start_utc": "2025-12-06T00:00:00+00:00",
+    "steps": 90
+  },
+  "pnl_decomposition": {
+    "approx_sum": 0.557096,
+    "cost_component_sum": -0.003689,
+    "funding_component_sum": 0.002338,
+    "price_component_sum": 0.558446
+  }
+}

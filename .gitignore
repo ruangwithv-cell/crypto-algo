@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Runtime state / logs
+state_live/logs/
+state_live/archives/
+state_live/*.json
+state_live/*.csv
+state_live/*.txt
+state_live/*_latest.*
+state_live/*_state.json
+state_live/unrestricted_memos/
+state_live/long_memos/
+state_live/shadow_memos/
+
+# Local env / secrets
+.env*
+
+# Build / temp
+*.log
+/tmp/

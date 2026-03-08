@@ -1,0 +1,37 @@
+{
+  "last_exit_at": {},
+  "memory": {
+    "APT": {
+      "entry_streak": 0,
+      "exit_streak": 0
+    },
+    "ENA": {
+      "entry_streak": 0,
+      "exit_streak": 0
+    },
+    "LDO": {
+      "entry_streak": 0,
+      "exit_streak": 0
+    },
+    "OP": {
+      "entry_streak": 0,
+      "exit_streak": 0
+    },
+    "PUMP": {
+      "entry_streak": 0,
+      "exit_streak": 0
+    },
+    "WIF": {
+      "entry_streak": 0,
+      "exit_streak": 0
+    }
+  },
+  "positions": {
+    "ENA": {
+      "entry_price": 0.1147,
+      "last_price": 0.1147,
+      "opened_at": "2026-03-06T08:00:00+00:00",
+      "size_pct_nav": 0.0375
+    }
+  }
+}

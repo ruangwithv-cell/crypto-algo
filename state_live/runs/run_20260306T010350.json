@@ -1,0 +1,107 @@
+{
+  "exposure": 0,
+  "instructions": [],
+  "signals": [
+    {
+      "carry_score": 0.40371999999999997,
+      "liquidity_score": 0.18217843982075999,
+      "oi_score": 0.3641726340933021,
+      "score": 0.589469,
+      "symbol": "IP",
+      "trend_30d": 0.9369993755129511,
+      "trend_7d": 0.7413499431930801,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.482675,
+      "liquidity_score": 0.232762538494188,
+      "oi_score": 0.089060994288516,
+      "score": 0.513269,
+      "symbol": "OP",
+      "trend_30d": 0.9812922645497264,
+      "trend_7d": 0.0,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.5249999999999999,
+      "liquidity_score": 0.29742534689166666,
+      "oi_score": 0.4511777591458523,
+      "score": 0.470983,
+      "symbol": "LIT",
+      "trend_30d": 0.3327313358800658,
+      "trend_7d": 0.7406093047396307,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.50364,
+      "liquidity_score": 0.0781306518862915,
+      "oi_score": 0.1559777587353995,
+      "score": 0.457611,
+      "symbol": "STRK",
+      "trend_30d": 0.6306223304057852,
+      "trend_7d": 0.29905526914905844,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.35408500000000004,
+      "liquidity_score": 0.23927388351,
+      "oi_score": 0.32629258956516033,
+      "score": 0.456502,
+      "symbol": "AXS",
+      "trend_30d": 0.5114039074459235,
+      "trend_7d": 0.5594489969129008,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.55,
+      "liquidity_score": 0.143979105072754,
+      "oi_score": 0.12842871713450885,
+      "score": 0.431774,
+      "symbol": "GALA",
+      "trend_30d": 0.523873739710952,
+      "trend_7d": 0.23263513462054583,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.517735,
+      "liquidity_score": 0.12945658581878666,
+      "oi_score": 0.06033362648948874,
+      "score": 0.388243,
+      "symbol": "LDO",
+      "trend_30d": 0.4893609555193371,
+      "trend_7d": 0.007359132326621853,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.47595,
+      "liquidity_score": 0.022605300354799997,
+      "oi_score": 0.012366930241599999,
+      "score": 0.387724,
+      "symbol": "TWT",
+      "trend_30d": 0.555858500589751,
+      "trend_7d": 0.0,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.8452299999999999,
+      "liquidity_score": 0.7371676941476999,
+      "oi_score": 0.22159164558705,
+      "score": 0.360802,
+      "symbol": "H",
+      "trend_30d": 0.0,
+      "trend_7d": 0.0,
+      "trend_90d": 0.5
+    },
+    {
+      "carry_score": 0.5249999999999999,
+      "liquidity_score": 0.022974459529548803,
+      "oi_score": 0.03505521698613011,
+      "score": 0.313254,
+      "symbol": "SUN",
+      "trend_30d": 0.1966383272116717,
+      "trend_7d": 0.05690441257155253,
+      "trend_90d": 0.5
+    }
+  ],
+  "timestamp": "2026-03-06T01:03:50+00:00"
+}
