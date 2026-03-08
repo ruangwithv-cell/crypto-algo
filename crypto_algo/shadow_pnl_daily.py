@@ -22,6 +22,15 @@ def _iso_day(ms: int) -> str:
     return datetime.fromtimestamp(ms / 1000, tz=timezone.utc).date().isoformat()
 
 
+def _funding_value(funding_map: dict[str, dict[int, float]], symbol: str, cur_day_key: int, prev_day_key: int) -> tuple[float | None, str | None]:
+    fmap = funding_map.get(symbol, {}) or {}
+    if cur_day_key in fmap:
+        return float(fmap[cur_day_key]), None
+    if prev_day_key in fmap:
+        return float(fmap[prev_day_key]), "fallback_prev_day"
+    return None, "missing"
+
+
 def main() -> int:
     args = parse_args()
 
@@ -34,6 +43,7 @@ def main() -> int:
     cur_day = days[-1]
     prev_day = days[-2]
     cur_day_key = (cur_day // 86_400_000) * 86_400_000
+    prev_day_key = (prev_day // 86_400_000) * 86_400_000
 
     cur_weights: dict[str, float] = live.get("weights", {}) or {}
 
@@ -67,6 +77,7 @@ def main() -> int:
     used = 0
     missing_symbols: list[str] = []
     missing_funding: list[str] = []
+    funding_fallback_prev_day: list[str] = []
 
     for s, w in last_weights.items():
         if abs(w) < 1e-12:
@@ -83,9 +94,12 @@ def main() -> int:
             missing_symbols.append(s)
             continue
         price_pnl += abs(w) * ((c0 - c1) / c0)
-        f = funding.get(s, {}).get(cur_day_key)
+
+        f, f_status = _funding_value(funding, s, cur_day_key, prev_day_key)
         if f is not None:
-            funding_pnl += abs(w) * float(f) * 3.0
+            funding_pnl += abs(w) * f * 3.0
+            if f_status == "fallback_prev_day":
+                funding_fallback_prev_day.append(s)
         else:
             missing_funding.append(s)
         used += 1
@@ -149,6 +163,8 @@ def main() -> int:
         out["expected_positions"] = len(last_weights)
     if missing_funding:
         out["warning_missing_funding"] = sorted(missing_funding)
+    if funding_fallback_prev_day:
+        out["warning_funding_fallback_prev_day"] = sorted(funding_fallback_prev_day)
     print(json.dumps(out, indent=2))
     return 0
 
